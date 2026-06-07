@@ -487,6 +487,7 @@
         Your order has been prepared and your email client will open — please click <strong>Send</strong> to complete your order. Thank you!
       </div>
 
+      <p style="font-size:0.9rem;color:var(--light-text);margin-top:20px;margin-bottom:8px;">When you click the button below, your email client will open with your order details already filled in. Simply press <strong>Send</strong> to submit your order.</p>
       <button type="button" class="submit-btn" onclick="submitOrder()">Submit Your Order</button>
 
     </form>
@@ -664,7 +665,7 @@
       '---\nSent via the Schmidt Knives website order form.';
 
     window.location.href =
-      'mailto:davidmurphy1088@mail.com' +
+      'mailto:davidmurphy1088@gmail.com' +
       '?subject=' + encodeURIComponent(subject) +
       '&body='    + encodeURIComponent(body);
 
