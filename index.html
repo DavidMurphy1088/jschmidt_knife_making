@@ -344,6 +344,53 @@
       font-size: 0.93rem;
     }
 
+    /* CONTACT */
+    #contact { background: var(--white); }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      margin-top: 36px;
+    }
+
+    .contact-card {
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
+      border-radius: 3px;
+      padding: 28px 24px;
+    }
+
+    .contact-card-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .contact-card-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      color: var(--dark);
+      line-height: 1.5;
+    }
+
+    .contact-card-value a {
+      color: var(--dark);
+      text-decoration: none;
+    }
+
+    .contact-card-value a:hover {
+      color: var(--accent);
+    }
+
+    @media (max-width: 640px) {
+      .contact-grid { grid-template-columns: 1fr; }
+    }
+
     /* FOOTER */
     footer {
       background: var(--dark);
@@ -375,6 +422,7 @@
     <li><a href="#john">John</a></li>
     <li><a href="#technical">Technical</a></li>
     <li><a href="#order">Order</a></li>
+    <li><a href="#contact">Contact</a></li>
   </ul>
 </nav>
 
@@ -495,6 +543,29 @@
       <button type="button" class="submit-btn" onclick="submitOrder()">Submit Your Order</button>
 
     </form>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-inner">
+    <h2>Get in Touch</h2>
+    <p>If you have questions about our knives, we'd love to hear from you.</p>
+
+    <div class="contact-grid">
+      <div class="contact-card">
+        <div class="contact-card-label">Location</div>
+        <div class="contact-card-value">Wellington,<br>New Zealand</div>
+      </div>
+      <div class="contact-card">
+        <div class="contact-card-label">Email</div>
+        <div class="contact-card-value"><a href="mailto:jpschmidt4444@gmail.com">jpschmidt4444@gmail.com</a></div>
+      </div>
+      <div class="contact-card">
+        <div class="contact-card-label">Hours</div>
+        <div class="contact-card-value">Mon – Fri<br>9am – 5pm</div>
+      </div>
+    </div>
   </div>
 </section>
 
