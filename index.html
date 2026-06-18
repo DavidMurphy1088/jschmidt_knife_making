@@ -741,7 +741,8 @@
     var opts = {
       method:  'POST',
       body:    payload,
-      headers: { 'Content-Type': 'application/json' },
+      mode:    'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
     };
 
     Promise.all([
