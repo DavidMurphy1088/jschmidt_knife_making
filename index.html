@@ -532,15 +532,10 @@
 
       <div id="validationMsg" class="form-validation-msg"></div>
       <div id="successMsg" class="form-success-msg">
-        Your order has been prepared and your email client will open — please click <strong>Send</strong> to complete your order. Thank you!
+        Your order has been received — thank you! A confirmation email is on its way to you.
       </div>
 
-      <div class="price-note" style="margin-top:24px;margin-bottom:12px;">
-        Your order has been prepared. Please click <strong>SUBMIT YOUR ORDER</strong>.<br><br>
-        When you click the submit button your email client will open with your order details already filled in. Then simply press <strong>Send</strong> in your email to send us your order.<br><br>
-        Thank you!
-      </div>
-      <button type="button" class="submit-btn" onclick="submitOrder()">Submit Your Order</button>
+      <button type="button" class="submit-btn" id="submitBtn" onclick="submitOrder()">Submit Your Order</button>
 
     </form>
   </div>
@@ -575,6 +570,9 @@
 </footer>
 
 <script>
+  const APPS_SCRIPT_URL      = 'PASTE_CODE_GS_DEPLOYMENT_URL_HERE';
+  const NOTIFY_ORGANISER_URL = 'PASTE_NOTIFY_ORGANISER_GS_DEPLOYMENT_URL_HERE';
+
   const WIDTHS   = ['6 mm', '9 mm', '12 mm', '15 mm', '19 mm'];
   const GRINDS   = ['Double Bevel', 'RH (Right-hand single bevel)', 'LH (Left-hand single bevel)'];
   const PROFILES = ['Curved', 'Straight'];
@@ -658,10 +656,11 @@
   }
 
   function submitOrder() {
-    var valid = true;
-    var ids   = getActiveKnifeIds();
-
+    var valid  = true;
+    var ids    = getActiveKnifeIds();
     var valMsg = document.getElementById('validationMsg');
+    var btn    = document.getElementById('submitBtn');
+
     valMsg.style.display = 'none';
     document.getElementById('successMsg').style.display = 'none';
 
@@ -711,7 +710,7 @@
       return;
     }
 
-    // Build email
+    // Build payload
     var name     = document.getElementById('fname').value.trim();
     var address1 = document.getElementById('address1').value.trim();
     var address2 = document.getElementById('address2').value.trim();
@@ -720,31 +719,46 @@
     var email    = document.getElementById('cemail').value.trim();
     var addrFull = [address1, address2, address3].filter(Boolean).join(', ');
 
-    var knivesText = ids.map(function(idx, i) {
-      var w = document.getElementById('width-'   + idx).value;
-      var g = document.getElementById('grind-'   + idx).value;
-      var p = document.getElementById('profile-' + idx).value;
-      return '  Knife ' + (i + 1) + ': Width ' + w + ' | Grind: ' + g + ' | Profile: ' + p;
-    }).join('\n');
+    var knives = ids.map(function(idx) {
+      return {
+        width:   document.getElementById('width-'   + idx).value,
+        grind:   document.getElementById('grind-'   + idx).value,
+        profile: document.getElementById('profile-' + idx).value,
+      };
+    });
 
-    var subject = 'Schmidt Knives Order — ' + name;
-    var body =
-      'New knife order received from the Schmidt Knives website.\n\n' +
-      'KNIVES ORDERED (' + ids.length + ' total)\n' +
-      knivesText + '\n\n' +
-      'CUSTOMER DETAILS\n' +
-      'Name:    ' + name    + '\n' +
-      'Address: ' + addrFull + '\n' +
-      'Phone:   ' + phone   + '\n' +
-      'Email:   ' + email   + '\n\n' +
-      '---\nSent via the Schmidt Knives website order form.';
+    var payload = JSON.stringify({
+      name:    name,
+      address: addrFull,
+      phone:   phone,
+      email:   email,
+      knives:  knives,
+    });
 
-    window.location.href =
-      'mailto:jpschmidt44@gmail.com' +
-      '?subject=' + encodeURIComponent(subject) +
-      '&body='    + encodeURIComponent(body);
+    btn.disabled    = true;
+    btn.textContent = 'Submitting…';
 
-    document.getElementById('successMsg').style.display = 'block';
+    var opts = {
+      method:  'POST',
+      body:    payload,
+      headers: { 'Content-Type': 'application/json' },
+    };
+
+    Promise.all([
+      fetch(APPS_SCRIPT_URL,      opts),
+      fetch(NOTIFY_ORGANISER_URL, opts),
+    ])
+    .then(function() {
+      document.getElementById('successMsg').style.display = 'block';
+      btn.disabled    = false;
+      btn.textContent = 'Submit Your Order';
+    })
+    .catch(function() {
+      valMsg.textContent = 'Something went wrong — please email jpschmidt44@gmail.com directly.';
+      valMsg.style.display = 'block';
+      btn.disabled    = false;
+      btn.textContent = 'Submit Your Order';
+    });
   }
 
   // Start with one knife row
