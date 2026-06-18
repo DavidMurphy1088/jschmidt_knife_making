@@ -20,7 +20,7 @@ function doPost(e) {
     }).join('\n');
 
     MailApp.sendEmail({
-      to:      'davidmurphy1088@gmail.com',   // ← change to jpschmidt44@gmail.com for production
+      to:      'jpschmidt44@gmail.com',
       subject: 'New knife order, ' + day + ' ' + month + ' ' + time + ' — ' + (data.name || ''),
       body:
         'New knife order received ' + day + ' ' + month + ' at ' + time + '\n\n'
