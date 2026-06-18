@@ -85,12 +85,18 @@ function doPost(e) {
   }
 }
 
-// Run this once from the editor to grant MailApp permission before deploying:
-// select testEmail from the dropdown and click Run
-function testEmail() {
+// Run testAll() once from the editor to grant MailApp + Sheets permissions before deploying.
+// Select testAll from the function dropdown and click Run.
+function testAll() {
+  // Test Sheets access
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Online Orders') || ss.insertSheet('Online Orders');
+  Logger.log('Sheet found: ' + sheet.getName() + ', rows: ' + sheet.getLastRow());
+
+  // Test MailApp access
   MailApp.sendEmail({
-    to:      'jpschmidt44@gmail.com',
+    to:      'davidmurphy1088@gmail.com',
     subject: 'Apps Script authorisation test — Schmidt Knives',
-    body:    'If you received this, MailApp is authorised and the script is ready to deploy.',
+    body:    'MailApp and SpreadsheetApp are both authorised. Script is ready.',
   });
 }
