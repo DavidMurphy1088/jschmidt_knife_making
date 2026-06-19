@@ -19,7 +19,11 @@ function doPost(e) {
     }
 
     const now       = new Date();
-    const timestamp = Utilities.formatDate(now, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+    const day       = Utilities.formatDate(now, Session.getScriptTimeZone(), 'd');
+    const month     = Utilities.formatDate(now, Session.getScriptTimeZone(), 'MMMM');
+    const year      = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy');
+    const time      = Utilities.formatDate(now, Session.getScriptTimeZone(), 'HH:mm');
+    const timestamp = day + ' ' + month + ' ' + year;
     const knives    = data.knives || [];
 
     // Customer details row
@@ -46,7 +50,6 @@ function doPost(e) {
     // Blank separator row between orders
     sheet.appendRow(['', '', '', '', '', '', '', '', '']);
 
-    // Build knife list for confirmation email
     const knifeLines = knives.map(function(k, i) {
       return '  Knife ' + (i + 1) + ': ' + k.width + ' | ' + k.grind + ' | ' + k.profile;
     }).join('\n');
@@ -74,6 +77,21 @@ function doPost(e) {
         + 'Wellington, New Zealand',
     });
 
+    // Notification email to John
+    MailApp.sendEmail({
+      to:      'jpschmidt44@gmail.com',
+      subject: 'New knife order, ' + day + ' ' + month + ' ' + time + ' — ' + (data.name || ''),
+      body:
+        'New knife order received ' + day + ' ' + month + ' at ' + time + '\n\n'
+        + 'Name:     ' + (data.name    || '') + '\n'
+        + 'Email:    ' + (data.email   || '') + '\n'
+        + 'Phone:    ' + (data.phone   || '') + '\n'
+        + 'Address:  ' + (data.address || '') + '\n\n'
+        + 'Knives ordered (' + knives.length + '):\n'
+        + knifeLines + '\n\n'
+        + '▶️ Added to the Google Sheet.',
+    });
+
     return ContentService
       .createTextOutput(JSON.stringify({ result: 'success' }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -88,12 +106,10 @@ function doPost(e) {
 // Run testAll() once from the editor to grant MailApp + Sheets permissions before deploying.
 // Select testAll from the function dropdown and click Run.
 function testAll() {
-  // Test Sheets access
   const ss    = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName('Online Orders') || ss.insertSheet('Online Orders');
   Logger.log('Sheet found: ' + sheet.getName() + ', rows: ' + sheet.getLastRow());
 
-  // Test MailApp access
   MailApp.sendEmail({
     to:      'davidmurphy1088@gmail.com',
     subject: 'Apps Script authorisation test — Schmidt Knives',

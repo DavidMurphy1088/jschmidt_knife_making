@@ -571,8 +571,7 @@
 </footer>
 
 <script>
-  const APPS_SCRIPT_URL      = 'https://script.google.com/macros/s/AKfycbyetY0sRrBiFZ7ZwxgIhtd6nUBi8B7KfSxJanTqxjS6Y_pho8T-CDU8_kbe2mYn1wfPMg/exec';
-  const NOTIFY_ORGANISER_URL = 'https://script.google.com/macros/s/AKfycby_f55qOWjDpsQXW1OPRuDLosfzf2q86LtUAxw6XLDC-wFRj48_uyRneFhfiEqNJKrX/exec';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyetY0sRrBiFZ7ZwxgIhtd6nUBi8B7KfSxJanTqxjS6Y_pho8T-CDU8_kbe2mYn1wfPMg/exec';
 
   const WIDTHS   = ['6 mm', '9 mm', '12 mm', '15 mm', '19 mm'];
   const GRINDS   = ['Double Bevel', 'RH (Right-hand single bevel)', 'LH (Left-hand single bevel)'];
@@ -746,10 +745,8 @@
       headers: { 'Content-Type': 'text/plain' },
     };
 
-    Promise.all([
-      fetch(APPS_SCRIPT_URL,      opts),
-      fetch(NOTIFY_ORGANISER_URL, opts),
-    ])
+    fetch(APPS_SCRIPT_URL, opts)
+    .then(function() { return Promise.resolve(); })
     .then(function() {
       document.getElementById('successMsg').style.display = 'block';
       btn.disabled    = false;
