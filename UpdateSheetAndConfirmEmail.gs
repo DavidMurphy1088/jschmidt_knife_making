@@ -103,16 +103,81 @@ function doPost(e) {
   }
 }
 
-// Run testAll() once from the editor to grant MailApp + Sheets permissions before deploying.
-// Select testAll from the function dropdown and click Run.
+// Run testAll() to test the full process end-to-end.
+// Both emails go to davidmurphy1088@gmail.com so you can verify without involving John or a real customer.
 function testAll() {
-  const ss    = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('Online Orders') || ss.insertSheet('Online Orders');
-  Logger.log('Sheet found: ' + sheet.getName() + ', rows: ' + sheet.getLastRow());
+  const TEST_EMAIL = 'davidmurphy1088@gmail.com';
 
-  MailApp.sendEmail({
-    to:      'davidmurphy1088@gmail.com',
-    subject: 'Apps Script authorisation test — Schmidt Knives',
-    body:    'MailApp and SpreadsheetApp are both authorised. Script is ready.',
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  let   sheet = ss.getSheetByName('Online Orders');
+  if (!sheet) sheet = ss.insertSheet('Online Orders');
+
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow([
+      'Timestamp', 'Name', 'Address', 'Phone', 'Email',
+      'Knife #', 'Width', 'Grind', 'Profile'
+    ]);
+  }
+
+  const now       = new Date();
+  const day       = Utilities.formatDate(now, Session.getScriptTimeZone(), 'd');
+  const month     = Utilities.formatDate(now, Session.getScriptTimeZone(), 'MMMM');
+  const year      = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy');
+  const time      = Utilities.formatDate(now, Session.getScriptTimeZone(), 'HH:mm');
+  const timestamp = day + ' ' + month + ' ' + year;
+
+  const name    = 'Test Customer';
+  const address = '123 Test Street, Wellington, NZ';
+  const phone   = '+64 21 000 0000';
+  const knives  = [
+    { width: '9 mm',  grind: 'Double Bevel',                 profile: 'Curved'   },
+    { width: '12 mm', grind: 'RH (Right-hand single bevel)', profile: 'Straight' }
+  ];
+
+  // Sheet update
+  sheet.appendRow([timestamp, name, address, phone, TEST_EMAIL, '', '', '', '']);
+  knives.forEach(function(knife, i) {
+    sheet.appendRow(['', '', '', '', '', i + 1, knife.width, knife.grind, knife.profile]);
   });
+  sheet.appendRow(['', '', '', '', '', '', '', '', '']);
+
+  const knifeLines = knives.map(function(k, i) {
+    return '  Knife ' + (i + 1) + ': ' + k.width + ' | ' + k.grind + ' | ' + k.profile;
+  }).join('\n');
+
+  // Confirmation email (to David instead of real customer)
+  MailApp.sendEmail({
+    to:      TEST_EMAIL,
+    subject: '[TEST] Your Schmidt Knives order — ' + name,
+    body:
+      'Dear Test,\n\n'
+      + 'Thank you so much for your order and your interest in our knife selection.\n\n'
+      + 'Your order:\n\n'
+      + knifeLines + '\n\n'
+      + 'Total: 2 knives at USD $70 each — no payment required now.\n'
+      + 'I will be in touch once 150 orders are received and production begins,\n'
+      + 'and again when your knives are ready.\n\n'
+      + 'Warm regards,\n'
+      + 'John Schmidt\n'
+      + 'Schmidt Knives\n'
+      + 'jpschmidt44@gmail.com\n'
+      + 'Wellington, New Zealand',
+  });
+
+  // Notification email (to David instead of John)
+  MailApp.sendEmail({
+    to:      TEST_EMAIL,
+    subject: '[TEST] New knife order, ' + day + ' ' + month + ' ' + time + ' — ' + name,
+    body:
+      'New knife order received ' + day + ' ' + month + ' at ' + time + '\n\n'
+      + 'Name:     ' + name    + '\n'
+      + 'Email:    ' + TEST_EMAIL + '\n'
+      + 'Phone:    ' + phone   + '\n'
+      + 'Address:  ' + address + '\n\n'
+      + 'Knives ordered (2):\n'
+      + knifeLines + '\n\n'
+      + '▶️ Added to the Google Sheet.',
+  });
+
+  Logger.log('testAll complete — sheet updated, 2 emails sent to ' + TEST_EMAIL);
 }
