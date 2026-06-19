@@ -5,18 +5,11 @@
 // Paste the deployment URL into index.html as the APPS_SCRIPT_URL value.
 
 function doPost(e) {
+  var step = 'parsing order data';
+  var data = {};
   try {
-    const data  = JSON.parse(e.postData.contents);
-    const ss    = SpreadsheetApp.getActiveSpreadsheet();
-    let   sheet = ss.getSheetByName('Online Orders');
-    if (!sheet) sheet = ss.insertSheet('Online Orders');
-
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow([
-        'Timestamp', 'Name', 'Address', 'Phone', 'Email',
-        'Knife #', 'Width', 'Grind', 'Profile'
-      ]);
-    }
+    data  = JSON.parse(e.postData.contents);
+    const knives = data.knives || [];
 
     const now       = new Date();
     const day       = Utilities.formatDate(now, Session.getScriptTimeZone(), 'd');
@@ -24,9 +17,25 @@ function doPost(e) {
     const year      = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy');
     const time      = Utilities.formatDate(now, Session.getScriptTimeZone(), 'HH:mm');
     const timestamp = day + ' ' + month + ' ' + year;
-    const knives    = data.knives || [];
 
-    // Customer details row
+    const knifeLines = knives.map(function(k, i) {
+      return '  Knife ' + (i + 1) + ': ' + k.width + ' | ' + k.grind + ' | ' + k.profile;
+    }).join('\n');
+
+    step = 'accessing Google Sheet';
+    const ss    = SpreadsheetApp.getActiveSpreadsheet();
+    let   sheet = ss.getSheetByName('Online Orders');
+    if (!sheet) sheet = ss.insertSheet('Online Orders');
+
+    step = 'writing header row';
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow([
+        'Timestamp', 'Name', 'Address', 'Phone', 'Email',
+        'Knife #', 'Width', 'Grind', 'Profile'
+      ]);
+    }
+
+    step = 'writing customer row to sheet';
     sheet.appendRow([
       timestamp,
       data.name    || '',
@@ -36,7 +45,7 @@ function doPost(e) {
       '', '', '', ''
     ]);
 
-    // One row per knife
+    step = 'writing knife rows to sheet';
     knives.forEach(function(knife, i) {
       sheet.appendRow([
         '', '', '', '', '',
@@ -47,17 +56,13 @@ function doPost(e) {
       ]);
     });
 
-    // Blank separator row between orders
+    step = 'writing separator row to sheet';
     sheet.appendRow(['', '', '', '', '', '', '', '', '']);
-
-    const knifeLines = knives.map(function(k, i) {
-      return '  Knife ' + (i + 1) + ': ' + k.width + ' | ' + k.grind + ' | ' + k.profile;
-    }).join('\n');
 
     const firstName = (data.name || '').split(' ')[0];
     const knifeWord = knives.length === 1 ? 'knife' : 'knives';
 
-    // Confirmation email to customer
+    step = 'sending confirmation email to customer';
     MailApp.sendEmail({
       to:      data.email,
       subject: 'Your Schmidt Knives order — ' + (data.name || ''),
@@ -77,7 +82,7 @@ function doPost(e) {
         + 'Wellington, New Zealand',
     });
 
-    // Notification email to John
+    step = 'sending notification email to John';
     MailApp.sendEmail({
       to:      'jpschmidt44@gmail.com',
       subject: 'New knife order, ' + day + ' ' + month + ' ' + time + ' — ' + (data.name || ''),
@@ -87,7 +92,7 @@ function doPost(e) {
         + 'Email:    ' + (data.email   || '') + '\n'
         + 'Phone:    ' + (data.phone   || '') + '\n'
         + 'Address:  ' + (data.address || '') + '\n\n'
-        + 'Knives ordered (' + knives.length + '):\n'
+        + 'Knives ordered (' + (data.knives || []).length + '):\n'
         + knifeLines + '\n\n'
         + '▶️ Added to the Google Sheet.',
     });
@@ -97,8 +102,37 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
+    // Build order summary from whatever data was parsed before the failure
+    var knives   = data.knives || [];
+    var knifeSum = knives.length > 0
+      ? knives.map(function(k, i) {
+          return '  Knife ' + (i + 1) + ': ' + (k.width || '?') + ' | ' + (k.grind || '?') + ' | ' + (k.profile || '?');
+        }).join('\n')
+      : '  (no knife data available)';
+
+    try {
+      MailApp.sendEmail({
+        to:      'davidmurphy1088@gmail.com',
+        subject: 'Schmidt Knives — ORDER PROCESSING ERROR',
+        body:
+          'An error occurred while processing a knife order.\n\n'
+          + 'Failed at step: ' + step + '\n'
+          + 'Error: ' + err.toString() + '\n\n'
+          + '── Order details ──────────────────────\n'
+          + 'Name:     ' + (data.name    || '(not parsed)') + '\n'
+          + 'Email:    ' + (data.email   || '(not parsed)') + '\n'
+          + 'Phone:    ' + (data.phone   || '(not parsed)') + '\n'
+          + 'Address:  ' + (data.address || '(not parsed)') + '\n\n'
+          + 'Knives:\n' + knifeSum + '\n\n'
+          + 'Check the Apps Script Executions log for a full stack trace.',
+      });
+    } catch (mailErr) {
+      // If the error email itself fails, nothing more we can do — check Executions log
+      Logger.log('Failed to send error notification: ' + mailErr.toString());
+    }
+
     return ContentService
-      .createTextOutput(JSON.stringify({ result: 'error', error: err.toString() }))
+      .createTextOutput(JSON.stringify({ result: 'error', error: err.toString(), step: step }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -148,7 +182,7 @@ function testAll() {
   // Confirmation email (to David instead of real customer)
   MailApp.sendEmail({
     to:      TEST_EMAIL,
-    subject: '[TEST] Your Schmidt Knives order — ' + name,
+    subject: '[TEST1] Your Schmidt Knives order — ' + name,
     body:
       'Dear Test,\n\n'
       + 'Thank you so much for your order and your interest in our knife selection.\n\n'
@@ -167,7 +201,7 @@ function testAll() {
   // Notification email (to David instead of John)
   MailApp.sendEmail({
     to:      TEST_EMAIL,
-    subject: '[TEST] New knife order, ' + day + ' ' + month + ' ' + time + ' — ' + name,
+    subject: '[TEST1] New knife order, ' + day + ' ' + month + ' ' + time + ' — ' + name,
     body:
       'New knife order received ' + day + ' ' + month + ' at ' + time + '\n\n'
       + 'Name:     ' + name    + '\n'
