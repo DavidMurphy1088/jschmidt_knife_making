@@ -567,7 +567,7 @@
 <!-- FOOTER -->
 <footer>
   <p>&copy; 2026 Schmidt Knives &mdash; Wellington, New Zealand &mdash; Director: John Schmidt</p>
-  <p style="margin-top:8px;font-size:0.75rem;opacity:0.5;">v1.0.4</p>
+  <p style="margin-top:8px;font-size:0.75rem;opacity:0.5;">v1.0.4 &nbsp;|&nbsp; script: <span id="scriptVersion">…</span></p>
 </footer>
 
 <script>
@@ -762,6 +762,18 @@
 
   // Start with one knife row
   addKnife();
+
+  // Display deployed script version
+  fetch(APPS_SCRIPT_URL)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var el = document.getElementById('scriptVersion');
+      if (el && d.version) el.textContent = d.version;
+    })
+    .catch(function() {
+      var el = document.getElementById('scriptVersion');
+      if (el) el.textContent = 'unavailable';
+    });
 </script>
 
 </body>
