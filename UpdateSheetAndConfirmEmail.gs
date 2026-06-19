@@ -4,7 +4,7 @@
 //   Who has access: Anyone
 // Paste the deployment URL into index.html as the APPS_SCRIPT_URL value.
 
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
 
 function doGet() {
   return ContentService
